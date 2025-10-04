@@ -752,14 +752,22 @@ void StickerSetBox::updateButtons() {
 					&st::menuIconManage);
 			});
 		}();
+
+		auto stickerSetId = _inner->setId();
+		auto ownerId = stickerSetId >> 32;
+		auto seqByOwner = stickerSetId & 0xffff;
+		auto extByte = (stickerSetId >> 24) & 0xff;
+		auto sepByte = (stickerSetId >> 16) & 0xff;
+
+		if (sepByte == 0x3f) {
+			ownerId |= 0x80000000;
+		}
+		if (extByte) {
+			seqByOwner = 0x10000 - seqByOwner;
+			ownerId += 0x100000000;
+		}
+
         const auto author = [=] {
-            auto ownerId = _inner->setId() >> 32;
-            if ((_inner->setId() >> 16 & 0xff) == 0x3f) {
-                ownerId |= 0x80000000;
-            }
-            if (_inner->setId() >> 24 & 0xff) {
-                ownerId += 0x100000000;
-            }
             const auto peer = _session->data().peerLoaded(static_cast<PeerId>(ownerId));
             if (peer != nullptr) {
                 if (const auto window = _session->tryResolveWindow()) {
